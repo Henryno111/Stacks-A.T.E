@@ -9,14 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@onflow/fcl": "^1.13.4",
-    "@onflow/types": "^1.4.1",
-    "framer-motion": "^12.4.1",
-    "lucide-react": "^0.475.0",
-    "next": "15.1.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-use": "^17.6.0"
+    "@onflow/fcl": "^1.4.1",
+    "@stacks/connect": "^7.4.0",
+    "@stacks/network": "^6.5.0",
+    "@stacks/transactions": "^6.5.0",
+    "framer-motion": "^10.12.16",
+    "lucide-react": "^0.246.0",
+    "next": "13.4.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-use": "^17.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
