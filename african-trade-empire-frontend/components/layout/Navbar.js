@@ -7,7 +7,7 @@ import { Wallet, Compass, LayoutDashboard, Route, Menu, X, Gamepad as GamepadIco
 import { useAuth } from '../../context/AuthContext';
 import { useClickAway } from 'react-use';
 import * as fcl from "@onflow/fcl";
-import config from "../../config/flow.config";
+import config from "../../config/stacks.config";
 import Image from 'next/image';
 
 const WalletButton = ({ wallet, onSelect, isLoading, loadingWallet }) => (
@@ -31,7 +31,7 @@ const WalletButton = ({ wallet, onSelect, isLoading, loadingWallet }) => (
 );
 
 export default function Navbar() {
-  const { user, isLoading: authLoading, connectWallet, disconnectWallet } = useAuth();
+  const { user, stacksUser, isLoading: authLoading, connectWallet, disconnectWallet, connectStacksWallet } = useAuth();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [loadingWallet, setLoadingWallet] = useState(null);
@@ -48,10 +48,12 @@ export default function Navbar() {
     if (showMobileMenu) setShowMobileMenu(false);
   });
 
+  // Updated wallet options to include Stacks wallets
   const wallets = [
     { id: 'flow', name: 'Flow Wallet', icon: '/flow.webp' },
     { id: 'blocto', name: 'Blocto Wallet', icon: '/blocto.png' },
-    { id: 'dapper', name: 'Dapper Wallet', icon: '/dapper.png' }
+    { id: 'leather', name: 'Leather Wallet', icon: '/leather.png' },
+    { id: 'xverse', name: 'Xverse Wallet', icon: '/xverse.png' }
   ];
 
   const navLinks = [
@@ -69,8 +71,16 @@ export default function Navbar() {
   const handleWalletSelect = async (walletId) => {
     try {
       setLoadingWallet(walletId);
-      fcl.config().put("discovery.wallet", "https://fcl-discovery.onflow.org/testnet/authn");
-      await fcl.authenticate();
+      
+      if (walletId === 'leather' || walletId === 'xverse') {
+        // For Stacks wallets, we use the connectStacksWallet method
+        await connectStacksWallet();
+      } else {
+        // For Flow wallets
+        fcl.config().put("discovery.wallet", "https://fcl-discovery.onflow.org/testnet/authn");
+        await fcl.authenticate();
+      }
+      
       setShowWalletModal(false);
       showToast('Wallet connected successfully!');
     } catch (error) {
@@ -82,11 +92,25 @@ export default function Navbar() {
 
   const handleDisconnect = async () => {
     try {
-      await fcl.unauthenticate();
+      await disconnectWallet();
       showToast('Wallet disconnected successfully!');
     } catch (error) {
       showToast(`Failed to disconnect: ${error.message}`, 'error');
     }
+  };
+
+  // Determine if a user is logged in with either Flow or Stacks
+  const isAuthenticated = user.loggedIn || stacksUser !== null;
+  
+  // Get address to display based on which wallet is connected
+  const getDisplayAddress = () => {
+    if (user.loggedIn && user.addr) {
+      return `${user.addr.substring(0, 6)}...${user.addr.substring(user.addr.length - 4)}`;
+    } else if (stacksUser) {
+      const stacksAddress = stacksUser.profile.stxAddress.mainnet || stacksUser.profile.stxAddress.testnet;
+      return `${stacksAddress.substring(0, 6)}...${stacksAddress.substring(stacksAddress.length - 4)}`;
+    }
+    return '';
   };
 
   return (
@@ -148,14 +172,14 @@ export default function Navbar() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {user.loggedIn ? (
+                {isAuthenticated ? (
                   <button
                     onClick={handleDisconnect}
                     className="px-4 sm:px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium flex items-center gap-2 transition-all duration-300"
                   >
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    <span className="hidden sm:inline">{user.addr?.substring(0, 6)}...{user.addr?.substring(user.addr.length - 4)}</span>
-                    <span className="sm:hidden">{user.addr?.substring(0, 4)}...</span>
+                    <span className="hidden sm:inline">{getDisplayAddress()}</span>
+                    <span className="sm:hidden">{getDisplayAddress().substring(0, 7)}</span>
                   </button>
                 ) : (
                   <button
@@ -209,7 +233,7 @@ export default function Navbar() {
                   </Link>
                 ))}
                 <div className="pt-2">
-                  {user.loggedIn ? (
+                  {isAuthenticated ? (
                     <button
                       onClick={() => {
                         handleDisconnect();
@@ -218,7 +242,7 @@ export default function Navbar() {
                       className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium flex items-center justify-center gap-2 transition-all duration-300"
                     >
                       <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      {user.addr?.substring(0, 6)}...{user.addr?.substring(user.addr.length - 4)}
+                      {getDisplayAddress()}
                     </button>
                   ) : (
                     <button
@@ -267,6 +291,22 @@ export default function Navbar() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
+              toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white max-w-xs z-50`}
+          >
+            {toast.message}
+          </motion.div>
         )}
       </AnimatePresence>
     </>

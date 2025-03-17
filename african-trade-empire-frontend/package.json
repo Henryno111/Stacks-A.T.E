@@ -11,8 +11,13 @@
   "dependencies": {
     "@onflow/fcl": "^1.13.4",
     "@onflow/types": "^1.4.1",
+    "@stacks/auth": "^7.0.5",
+    "@stacks/connect": "^8.1.6",
+    "@stacks/network": "^7.0.2",
+    "@stacks/transactions": "^7.0.5",
     "framer-motion": "^12.4.1",
     "lucide-react": "^0.475.0",
+    "micro-stacks": "^1.2.1",
     "next": "15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
