@@ -8,16 +8,28 @@ const AuthContext = createContext({
   user: null,
   isLoading: false,
   error: null,
-  stacksUser: null, // New addition for Stacks auth
+  stacksUser: null, // For Stacks auth
   connectWallet: async () => {},
   disconnectWallet: async () => {},
-  connectStacksWallet: async () => {}, // New method
-  disconnectStacksWallet: async () => {}, // New method
+  connectStacksWallet: async () => {}, 
+  disconnectStacksWallet: async () => {}, 
 })
 
-// Initialize Stacks app config
+// Initialize Stacks app config with version specification
 const appConfig = new AppConfig(['store_write', 'publish_data'])
-const userSession = new UserSession({ appConfig })
+let userSession;
+
+// Create userSession safely with try/catch
+try {
+  userSession = new UserSession({ appConfig });
+} catch (error) {
+  console.error("Error initializing Stacks session:", error);
+  // Clear any corrupted session data
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('blockstack-session');
+  }
+  userSession = new UserSession({ appConfig });
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState({ loggedIn: false })
@@ -29,9 +41,17 @@ export function AuthProvider({ children }) {
     // Subscribe to Flow user changes
     fcl.currentUser.subscribe(setUser)
     
-    // Check if user is already signed in with Stacks
-    if (userSession.isUserSignedIn()) {
-      setStacksUser(userSession.loadUserData())
+    // Safely check if user is signed in with Stacks
+    try {
+      if (userSession && typeof userSession.isUserSignedIn === 'function' && userSession.isUserSignedIn()) {
+        setStacksUser(userSession.loadUserData())
+      }
+    } catch (error) {
+      console.error("Error checking Stacks login:", error);
+      // Clear any corrupted session data
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('blockstack-session');
+      }
     }
   }, [])
 
@@ -84,24 +104,36 @@ export function AuthProvider({ children }) {
         },
         redirectTo: '/',
         onFinish: (data) => {
-          setStacksUser(data.userSession.loadUserData())
+          if (data && data.userSession) {
+            setStacksUser(data.userSession.loadUserData())
+          }
           setIsLoading(false)
         },
         onCancel: () => {
           setIsLoading(false)
         },
-        userSession,
+        userSession: userSession,
       })
     } catch (err) {
+      console.error("Error connecting Stacks wallet:", err);
       setError(err.message)
       setIsLoading(false)
     }
   }
 
   const disconnectStacksWallet = async () => {
-    if (userSession.isUserSignedIn()) {
-      userSession.signUserOut()
-      setStacksUser(null)
+    try {
+      if (userSession && typeof userSession.isUserSignedIn === 'function' && userSession.isUserSignedIn()) {
+        userSession.signUserOut()
+        setStacksUser(null)
+      }
+    } catch (error) {
+      console.error("Error signing out Stacks user:", error);
+      // Force clear session data in case of errors
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('blockstack-session');
+      }
+      setStacksUser(null);
     }
   }
 
@@ -109,7 +141,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider 
       value={{
         user,
-        stacksUser, // Include Stacks user in context
+        stacksUser,
         isLoading,
         error,
         connectWallet,

@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "types": ["estree"],
     "paths": {
       "@/*": ["./*"]
     }
