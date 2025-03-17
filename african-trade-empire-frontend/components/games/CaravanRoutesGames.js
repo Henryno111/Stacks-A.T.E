@@ -1044,7 +1044,7 @@ const CaravanRoutesGame = () => {
         >
           <div className="inline-block p-2 mb-4 rounded-xl bg-gray-800/50 border border-amber-500/20">
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600">
-              Crypto Caravan
+              ATF Caravan
             </h1>
           </div>
           
