@@ -58,7 +58,7 @@ const NFTCard = ({ nft, onSelect, isSelected }) => {
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-400">Price</p>
-            <p className="font-bold text-white">{nft.price} FLOW</p>
+            <p className="font-bold text-white">{nft.price} STX</p>
           </div>
         </div>
         

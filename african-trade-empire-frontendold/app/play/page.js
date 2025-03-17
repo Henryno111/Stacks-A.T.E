@@ -1,8 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, RefreshCcw, Gamepad, Coins } from 'lucide-react';
+import { Trophy, RefreshCcw, Gamepad, Coins, Map } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import CaravanRoutesGame from '../../components/CaravanRoutesGames';
 
 // Add necessary styles for 3D transforms
 const styles = {
@@ -83,8 +84,9 @@ const Card = ({ card, onSelect, isSelectable, getRarityColor }) => {
   );
 };
 
-const NFTTradingGame = () => {
+const GamePage = () => {
   const { user } = useAuth();
+  const [activeGame, setActiveGame] = useState('nft'); // 'nft' or 'caravan'
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [gameState, setGameState] = useState('playing');
@@ -121,8 +123,10 @@ const NFTTradingGame = () => {
   };
 
   useEffect(() => {
-    initializeGame();
-  }, []);
+    if (activeGame === 'nft') {
+      initializeGame();
+    }
+  }, [activeGame]);
 
   const handleCardSelect = (cardId) => {
     if (gameState !== 'playing' || selectedCard !== null) return;
@@ -155,86 +159,139 @@ const NFTTradingGame = () => {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-purple-900 to-gray-900 pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <div className="inline-block p-2 mb-4 rounded-xl bg-gray-800/50 border border-purple-500/20">
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-500">
-              NFT Trader Pro
-            </h1>
-          </div>
-          
-          <div className="flex items-center justify-center gap-8 mt-4">
-            <div className="bg-gray-800/40 rounded-lg p-3 border border-purple-500/20">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-400" />
-                <span className="text-white font-bold">Score: {score}</span>
-              </div>
-            </div>
-            <div className="bg-gray-800/40 rounded-lg p-3 border border-purple-500/20">
-              <div className="flex items-center gap-2">
-                <Coins className="w-5 h-5 text-green-400" />
-                <span className="text-white font-mono">Balance: {score * 100} FLOW</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <AnimatePresence>
-            {cards.map((card) => (
-              <Card
-                key={card.id}
-                card={card}
-                onSelect={handleCardSelect}
-                isSelectable={gameState === 'playing' && selectedCard === null}
-                getRarityColor={getRarityColor}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-
-        <AnimatePresence>
-          {showResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="text-center"
+        {/* Game Selection Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-gray-800/50 rounded-xl p-1 flex gap-2">
+            <button
+              onClick={() => setActiveGame('nft')}
+              className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-all ${
+                activeGame === 'nft' 
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+              }`}
             >
-              <div className={`inline-block px-6 py-3 rounded-xl ${
-                gameState === 'won' 
-                  ? 'bg-green-500/20 border border-green-500/40' 
-                  : 'bg-red-500/20 border border-red-500/40'
-              } mb-6`}>
-                <span className={`text-2xl font-bold ${
-                  gameState === 'won' ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {gameState === 'won' ? '🚀 To The Moon!' : '📉 Paper Hands!'}
-                </span>
-              </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={initializeGame}
-                disabled={isLoading}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white font-medium flex items-center gap-2 mx-auto disabled:opacity-50"
+              <Gamepad className="w-5 h-5" />
+              <span>NFT Trader</span>
+            </button>
+            <button
+              onClick={() => setActiveGame('caravan')}
+              className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-all ${
+                activeGame === 'caravan' 
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-lg' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+              }`}
+            >
+              <Map className="w-5 h-5" />
+              <span>Caravan Routes</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Game Content */}
+        <AnimatePresence mode="wait">
+          {activeGame === 'nft' ? (
+            <motion.div
+              key="nft-game"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* NFT Trading Game */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-8"
               >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white/20 border-t-white rounded-full" />
-                    Minting New Round...
-                  </>
-                ) : (
-                  <>
-                    <Gamepad className="w-4 h-4" />
-                    Play Again
-                  </>
+                <div className="inline-block p-2 mb-4 rounded-xl bg-gray-800/50 border border-purple-500/20">
+                  <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-500">
+                    NFT Trader Pro
+                  </h1>
+                </div>
+                
+                <div className="flex items-center justify-center gap-8 mt-4">
+                  <div className="bg-gray-800/40 rounded-lg p-3 border border-purple-500/20">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-yellow-400" />
+                      <span className="text-white font-bold">Score: {score}</span>
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/40 rounded-lg p-3 border border-purple-500/20">
+                    <div className="flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-green-400" />
+                      <span className="text-white font-mono">Balance: {score * 100} FLOW</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <AnimatePresence>
+                  {cards.map((card) => (
+                    <Card
+                      key={card.id}
+                      card={card}
+                      onSelect={handleCardSelect}
+                      isSelectable={gameState === 'playing' && selectedCard === null}
+                      getRarityColor={getRarityColor}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              <AnimatePresence>
+                {showResult && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="text-center"
+                  >
+                    <div className={`inline-block px-6 py-3 rounded-xl ${
+                      gameState === 'won' 
+                        ? 'bg-green-500/20 border border-green-500/40' 
+                        : 'bg-red-500/20 border border-red-500/40'
+                    } mb-6`}>
+                      <span className={`text-2xl font-bold ${
+                        gameState === 'won' ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {gameState === 'won' ? '🚀 To The Moon!' : '📉 Paper Hands!'}
+                      </span>
+                    </div>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={initializeGame}
+                      disabled={isLoading}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white font-medium flex items-center gap-2 mx-auto disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white/20 border-t-white rounded-full" />
+                          Minting New Round...
+                        </>
+                      ) : (
+                        <>
+                          <Gamepad className="w-4 h-4" />
+                          Play Again
+                        </>
+                      )}
+                    </motion.button>
+                  </motion.div>
                 )}
-              </motion.button>
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="caravan-game"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Import the Caravan Routes Game component */}
+              <CaravanRoutesGame />
             </motion.div>
           )}
         </AnimatePresence>
@@ -247,4 +304,4 @@ const NFTTradingGame = () => {
   );
 };
 
-export default NFTTradingGame;
+export default GamePage;
